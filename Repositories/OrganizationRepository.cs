@@ -101,6 +101,36 @@ public class OrganizationRepository {
         return Convert.ToInt32(idCommand.ExecuteScalar());
     }
 
+    public void AddRange(List<Organization> organizations) {
+        using var connection = _databaseContext.CreateConnection();
+        connection.Open();
+
+        using var transaction = connection.BeginTransaction();
+
+        foreach (var organization in organizations) {
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+
+            command.CommandText = """
+                                  INSERT INTO Organizations
+                                      (Name, INN, Email, ReceptionPhone, HRPhone, AccountingPhone)
+                                  VALUES
+                                      (@Name, @INN, @Email, @ReceptionPhone, @HRPhone, @AccountingPhone);
+                                  """;
+
+            command.Parameters.AddWithValue("@Name", organization.Name);
+            command.Parameters.AddWithValue("@INN", organization.INN);
+            command.Parameters.AddWithValue("@Email", organization.Email);
+            command.Parameters.AddWithValue("@ReceptionPhone", organization.ReceptionPhone);
+            command.Parameters.AddWithValue("@HRPhone", organization.HRPhone);
+            command.Parameters.AddWithValue("@AccountingPhone", organization.AccountingPhone);
+
+            command.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+    }
+
     public bool Update(Organization organization) {
         using var connection = _databaseContext.CreateConnection();
         connection.Open();
